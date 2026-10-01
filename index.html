@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Le récit en trois temps - Français 4e année</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & React DOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    Babel.registerPreset('react-classic', {
+      presets: [
+        [Babel.availablePresets['react'], { runtime: 'classic' }]
+      ]
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #f1f5f9;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+    /* Custom Scrollbar for TNI/Touch readability */
+    ::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }
+    }
+    .card-hover-lift {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card-hover-lift:hover {
+      transform: translateY(-4px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <div id="root" class="min-h-screen flex flex-col"></div>
+
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useMemo } = React;
+
+    // Vocab Data structured strictly as required
+    const VOCABULARY_DATA = {
+      lieux: {
+        title: "🏡 1. Les lieux",
+        subcategories: [
+          {
+            subtitle: "Autour du chemin et de la route",
+            words: [
+              "le bord de la route", "le chemin du retour", "un étroit sentier de terre",
+              "le bord du champ", "la lisière du petit bois", "le fossé rempli de feuilles",
+              "le coin de la rue", "la haie d'arbustes d'automne", "un virage mystérieux", "le bord du trottoir"
+            ]
+          },
+          {
+            subtitle: "La cabane et ses détails",
+            words: [
+              "une vieille cabane en bois", "un abri abandonné", "le tapis de feuilles craquantes",
+              "un épais tas de feuilles mortes", "le seuil de la porte", "la petite lucarne poussiéreuse",
+              "des planches de bois gris", "un toit recouvert de mousse verte", "le grand arbre centenaire",
+              "la vitre brisée", "un coin d'ombre", "le parquet de bois râpé"
+            ]
+          }
+        ]
+      },
+      personnages: {
+        title: "🎒 2. Les personnages",
+        subcategories: [
+          {
+            subtitle: "Les élèves et protagonistes",
+            words: [
+              "deux écoliers curieux", "une fillette débrouillarde", "un garçon observateur",
+              "deux camarades de classe", "une amie courageuse", "un jeune élève attentif",
+              "deux aventuriers du quotidien", "un duo d'inséparables", "un compagnon de route", "une camarade téméraire"
+            ]
+          },
+          {
+            subtitle: "Les figures secondaires et animaux",
+            words: [
+              "un petit écureuil roux", "un chien fidèle", "un oiseau intrigué",
+              "le propriétaire mystérieux", "un vieil habitant du quartier", "un gardien discret", "un passant pressé"
+            ]
+          }
+        ]
+      },
+      moments: {
+        title: "🍂 3. Les moments",
+        subcategories: [
+          {
+            subtitle: "L'heure et le moment de la journée",
+            words: [
+              "la fin des classes", "l'heure du retour", "la sortie de l'école",
+              "un bel après-midi d'octobre", "un frais vendredi d'automne", "le moment du goûter",
+              "la fin de la journée", "le début du crépuscule"
+            ]
+          },
+          {
+            subtitle: "L'atmosphère et la météo",
+            words: [
+              "le soleil couchant", "la lumière dorée d'octobre", "une journée ventée",
+              "une douce brise d'automne", "le ciel dégagé", "une fraîcheur d'automne",
+              "les ombres allongées du soir", "un air frais et piquant"
+            ]
+          }
+        ]
+      },
+      declencheurs: {
+        title: "⚡ 4. L'élément déclencheur & Problèmes",
+        subcategories: [
+          {
+            subtitle: "Événements soudains et bruits",
+            words: [
+              "une soudaine rafale de vent", "le claquement brutal de la porte", "un grincement effrayant",
+              "un choc inattendu", "un grand coup de vent", "un froissement de feuilles", "un objet tombé du toit"
+            ]
+          },
+          {
+            subtitle: "Problèmes et obstacles",
+            words: [
+              "un verrou rouillé", "la boîte coincée", "une serrure totalement bloquée",
+              "une clé introuvable", "la porte coincée de l'extérieur", "la chute d'un vieux coffret",
+              "un obstacle imprévu", "la poignée cassée", "un cadenas de métal rouillé"
+            ]
+          }
+        ]
+      }
+    };
+
+    const QUIZ_QUESTIONS = [
+      {
+        id: 1,
+        question: "Dans quelle partie du récit trouve-t-on la présentation du temps, du lieu et des personnages?",
+        options: [
+          "Le milieu (Les péripéties)",
+          "Le début (La situation initiale)",
+          "La fin (Le dénouement)",
+          "La fin (La situation finale)"
+        ],
+        correctIndex: 1,
+        hint: "Pense au tout premier moment du récit, avant que le problème n'arrive!",
+        explanation: "La situation initiale (au DÉBUT) sert à poser les bases du récit : Qui? Où? Quand?"
+      },
+      {
+        id: 2,
+        question: "Qu'est-ce que l'élément déclencheur?",
+        options: [
+          "La fin heureuse du livre",
+          "Les actions faites par le héros pour gagner",
+          "Un événement qui perturbe la situation initiale et crée un problème",
+          "La liste des personnages principaux"
+        ],
+        correctIndex: 2,
+        hint: "C'est l'événement 'Tout à coup' qui casse la tranquillité du début.",
+        explanation: "L'élément déclencheur vient troubler la calme situation initiale et lance le MILIEU du récit."
+      },
+      {
+        id: 3,
+        question: "Dans l'histoire de la frousse de l'Halloween, quelle phrase représente une PÉRIPÉTIE?",
+        options: [
+          "Le soir de l'Halloween, Léo et Chloé se promènent pour la collecte de bonbons.",
+          "Léo tente de tout ramasser rapidement, mais le chien renifle les chocolats.",
+          "Rassurés, Léo et Chloé reprennent leur joyeuse route vers la maison suivante.",
+          "Heureusement, la propriétaire sort en courant et rattrape son chien."
+        ],
+        correctIndex: 1,
+        hint: "Recherche un effort ou une action tentée par un personnage pour régler le problème pendant l'action.",
+        explanation: "Essayer de ramasser les friandises pendant que le chien s'approche est une péripétie (une action concrète pour résoudre le problème ou réagir à l'événement)."
+      },
+      {
+        id: 4,
+        question: "Est-ce qu'une situation finale est TOUJOURS présente dans tous les récits?",
+        options: [
+          "Oui, obligatoire à 100%",
+          "Non, parfois il n'y a pas de situation finale dans un récit",
+          "Oui, mais seulement dans les contes fantastiques",
+          "Non, la situation initiale remplace la fin"
+        ],
+        correctIndex: 1,
+        hint: "Rappelle-toi la remarque essentielle dans la leçon sur la fin du récit.",
+        explanation: "Exact! Parfois, une histoire se termine immédiatement après le dénouement sans ajouter de situation finale."
+      },
+      {
+        id: 5,
+        question: "Où se situe le DÉNOUEMENT dans le schéma en 3 temps?",
+        options: [
+          "Au tout Début du récit",
+          "Au Milieu, juste avant l'élément déclencheur",
+          "À la Fin (c'est la dernière tentative qui règle le problème)",
+          "En dehors du texte"
+        ],
+        correctIndex: 2,
+        hint: "C'est l'action décisive qui permet d'apporter la solution finale au problème.",
+        explanation: "Le dénouement fait partie de la FIN du récit et résout le problème principal."
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('decouverte');
+      const [copiedToast, setCopiedToast] = useState('');
+
+      const showToast = (msg) => {
+        setCopiedToast(msg);
+        setTimeout(() => setCopiedToast(''), 2500);
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-800">
+          
+          {/* Header Bar - Spacious & High Visibility */}
+          <header className="bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-800 text-white shadow-xl sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 py-4 sm:px-8 flex flex-col lg:flex-row justify-between items-center gap-4">
+              
+              {/* Title & Badge */}
+              <div className="flex items-center space-x-4 text-center sm:text-left">
+                <span className="text-4xl sm:text-5xl bg-white/10 p-3 rounded-2xl">📖</span>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-wide font-heading">
+                    Le récit en trois temps
+                  </h1>
+                  <p className="text-blue-100 text-sm sm:text-base font-semibold mt-0.5">
+                    Français 4e année • Schéma narratif & Atelier interactif
+                  </p>
+                </div>
+              </div>
+
+              {/* Navigation Tabs - Large Touch Buttons for TNI */}
+              <nav className="flex flex-wrap justify-center gap-2.5 w-full lg:w-auto">
+                <button
+                  onClick={() => setActiveTab('decouverte')}
+                  className={`px-4 py-3 rounded-2xl font-bold text-base sm:text-lg transition-all flex items-center space-x-2 shadow-sm ${
+                    activeTab === 'decouverte'
+                      ? 'bg-white text-indigo-800 shadow-lg scale-105 ring-4 ring-indigo-300'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  <span className="text-xl">🧩</span>
+                  <span>1. Découverte</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('projet')}
+                  className={`px-4 py-3 rounded-2xl font-bold text-base sm:text-lg transition-all flex items-center space-x-2 shadow-sm ${
+                    activeTab === 'projet'
+                      ? 'bg-white text-amber-800 shadow-lg scale-105 ring-4 ring-amber-300'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  <span className="text-xl">✍️</span>
+                  <span>2. Projet d'écriture</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('vocabulaire')}
+                  className={`px-4 py-3 rounded-2xl font-bold text-base sm:text-lg transition-all flex items-center space-x-2 shadow-sm ${
+                    activeTab === 'vocabulaire'
+                      ? 'bg-white text-purple-800 shadow-lg scale-105 ring-4 ring-purple-300'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  <span className="text-xl">💡</span>
+                  <span>3. Vocabulaire</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`px-4 py-3 rounded-2xl font-bold text-base sm:text-lg transition-all flex items-center space-x-2 shadow-sm ${
+                    activeTab === 'quiz'
+                      ? 'bg-white text-emerald-800 shadow-lg scale-105 ring-4 ring-emerald-300'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  <span className="text-xl">🎯</span>
+                  <span>4. Exercices</span>
+                </button>
+              </nav>
+            </div>
+          </header>
+
+          {/* Toast Notification */}
+          {copiedToast && (
+            <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 border-2 border-indigo-400 animate-bounce">
+              <span className="text-2xl">✨</span>
+              <span className="font-bold text-base">{copiedToast}</span>
+            </div>
+          )}
+
+          {/* Main Area with Generous Spacing */}
+          <main className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 flex-1 flex flex-col space-y-10">
+            {activeTab === 'decouverte' && <DecouverteTab showToast={showToast} onGoToProject={() => setActiveTab('projet')} />}
+            {activeTab === 'projet' && <ProjetEcritureTab showToast={showToast} />}
+            {activeTab === 'vocabulaire' && <VocabulaireTab showToast={showToast} />}
+            {activeTab === 'quiz' && <QuizTab showToast={showToast} />}
+          </main>
+
+          {/* Footer */}
+          <footer className="bg-slate-800 text-slate-300 py-6 px-6 text-center text-sm border-t border-slate-700 mt-12">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+              <p className="font-medium">🎓 Application Éducative - Programme de Formation de l'École Québécoise (PFEQ)</p>
+              <p className="text-slate-400">Enseignement explicite du Français en 4e année du primaire</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    function DecouverteTab({ showToast, onGoToProject }) {
+      const [activeSection, setActiveSection] = useState('all');
+      const [placedItems, setPlacedItems] = useState({});
+      const [sortingFeedback, setSortingFeedback] = useState(null);
+
+      const dragParagraphs = [
+        { 
+          id: 'p1', 
+          target: 'debut', 
+          text: "Un soir d'octobre, Léo, déguisé en pirate, et sa petite sœur Chloé, déguisée en sorcière, marchent dans les rues animées." 
+        },
+        { 
+          id: 'p2', 
+          target: 'debut', 
+          text: "Leurs citrouilles débordent déjà de délicieux bonbons quand ils arrivent près d'une maison sombre." 
+        },
+        { 
+          id: 'p3', 
+          target: 'milieu', 
+          text: "Soudain, une grande ombre surgit d'un buisson avec un miaulement perçant !" 
+        },
+        { 
+          id: 'p4', 
+          target: 'milieu', 
+          text: "Sursautant de peur, Chloé échappe son seau. Une montagne de bonbons s'éparpille et un chien accourt pour les manger. Léo le repousse courageusement avec son sabre pendant que Chloé ramasse vite son trésor." 
+        },
+        { 
+          id: 'p5', 
+          target: 'fin', 
+          text: "Heureusement, la voisine sort avec une lampe de poche, rappelle son chien espiègle et aide les enfants." 
+        },
+        { 
+          id: 'p6', 
+          target: 'fin', 
+          text: "Rassurés, Léo et Chloé reprennent joyeusement leur marche sous les étoiles." 
+        }
+      ];
+
+      const handleAssign = (paraId, targetBox) => {
+        setPlacedItems(prev => ({ ...prev, [paraId]: targetBox }));
+      };
+
+      const checkSorting = () => {
+        let correct = 0;
+        dragParagraphs.forEach(p => {
+          if (placedItems[p.id] === p.target) correct++;
+        });
+        if (correct === dragParagraphs.length) {
+          setSortingFeedback({ success: true, message: "🎉 Extraordinaire! Tu as reconstitué parfaitement toute l'aventure d'Halloween dans le bon ordre!" });
+          if (typeof confetti === 'function') confetti({ particleCount: 90, spread: 70 });
+        } else {
+          setSortingFeedback({ success: false, message: `💡 Tu as ${correct} sur ${dragParagraphs.length} bonnes réponses. Relis bien chaque événement et réessaie!` });
+        }
+      };
+
+      const resetSorting = () => {
+        setPlacedItems({});
+        setSortingFeedback(null);
+      };
+
+      return (
+        <div className="space-y-10 animate-fadeIn">
+          
+          {/* Hero Welcome Banner */}
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-8 sm:p-10 text-white shadow-xl space-y-6">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="space-y-4 max-w-4xl">
+                <span className="bg-white/20 text-white font-extrabold text-sm uppercase px-4 py-1.5 rounded-full tracking-wider">
+                  Leçon explicite • Schéma narratif
+                </span>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading leading-tight">
+                  Comment construire un récit en 3 temps?
+                </h2>
+                <p className="text-blue-50 text-lg sm:text-xl leading-relaxed">
+                  Un récit est une grande aventure découpée en 3 étapes essentielles : un <strong>Début</strong> calme, un <strong>Milieu</strong> rempli d'action et de rebondissements, et une <strong>Fin</strong> rassurante.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Main Blocks Interactive Cards Header */}
+          <div className="bg-white rounded-3xl p-8 shadow-md border border-slate-200 space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold font-heading text-slate-800 flex items-center gap-3">
+                  <span>🗺️</span> Le Schéma Visuel du Récit
+                </h3>
+                <p className="text-slate-600 text-base mt-1">Clique sur un temps pour observer sa définition et ses exemples.</p>
+              </div>
+
+              {/* View Filters */}
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  onClick={() => setActiveSection('all')}
+                  className={`px-4 py-2.5 rounded-2xl font-bold text-sm sm:text-base transition-all ${
+                    activeSection === 'all' ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  🔍 Tout afficher
+                </button>
+                <button
+                  onClick={() => setActiveSection('debut')}
+                  className={`px-4 py-2.5 rounded-2xl font-bold text-sm sm:text-base transition-all ${
+                    activeSection === 'debut' ? 'bg-emerald-600 text-white shadow-md ring-4 ring-emerald-200' : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
+                  }`}
+                >
+                  🟢 1. DÉBUT
+                </button>
+                <button
+                  onClick={() => setActiveSection('milieu')}
+                  className={`px-4 py-2.5 rounded-2xl font-bold text-sm sm:text-base transition-all ${
+                    activeSection === 'milieu' ? 'bg-amber-500 text-white shadow-md ring-4 ring-amber-200' : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                  }`}
+                >
+                  🟡 2. MILIEU
+                </button>
+                <button
+                  onClick={() => setActiveSection('fin')}
+                  className={`px-4 py-2.5 rounded-2xl font-bold text-sm sm:text-base transition-all ${
+                    activeSection === 'fin' ? 'bg-purple-600 text-white shadow-md ring-4 ring-purple-200' : 'bg-purple-100 text-purple-900 hover:bg-purple-200'
+                  }`}
+                >
+                  🔴 3. FIN
+                </button>
+              </div>
+            </div>
+
+            {/* Generous 3 Blocks Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* DÉBUT */}
+              <div 
+                onClick={() => setActiveSection('debut')}
+                className={`cursor-pointer transition-all duration-300 p-6 sm:p-8 rounded-3xl border-4 ${
+                  activeSection === 'debut' || activeSection === 'all'
+                    ? 'border-emerald-500 bg-emerald-50/90 shadow-lg ring-2 ring-emerald-300 scale-[1.01]'
+                    : 'border-slate-200 bg-slate-50 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="bg-emerald-600 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl font-heading tracking-wide">
+                    DÉBUT
+                  </span>
+                  <span className="text-4xl">🌱</span>
+                </div>
+                <h4 className="font-extrabold text-2xl text-emerald-950 font-heading">La situation initiale</h4>
+                <p className="text-base text-emerald-800 mt-2 leading-relaxed">
+                  Présentation précise du <strong>temps</strong>, du <strong>lieu</strong> et des <strong>personnages</strong>.
+                </p>
+                <div className="mt-5 text-sm sm:text-base bg-white p-4 rounded-2xl border border-emerald-200 text-slate-800 shadow-sm font-medium">
+                  <em>"Par une fraîche soirée d'octobre illuminée par la pleine lune, Léo et Chloé arpentent les rues..."</em>
+                </div>
+              </div>
+
+              {/* MILIEU */}
+              <div 
+                onClick={() => setActiveSection('milieu')}
+                className={`cursor-pointer transition-all duration-300 p-6 sm:p-8 rounded-3xl border-4 ${
+                  activeSection === 'milieu' || activeSection === 'all'
+                    ? 'border-amber-500 bg-amber-50/90 shadow-lg ring-2 ring-amber-300 scale-[1.01]'
+                    : 'border-slate-200 bg-slate-50 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="bg-amber-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl font-heading tracking-wide">
+                    MILIEU
+                  </span>
+                  <span className="text-4xl">⚡</span>
+                </div>
+                <h4 className="font-extrabold text-2xl text-amber-950 font-heading">L'action & Le problème</h4>
+                <div className="space-y-2 text-base text-amber-900 mt-2 leading-relaxed">
+                  <p>• <strong>Élément déclencheur :</strong> Événement perturbateur.</p>
+                  <p>• <strong>Péripéties :</strong> Actions pour résoudre le problème.</p>
+                </div>
+                <div className="mt-5 text-sm sm:text-base bg-white p-4 rounded-2xl border border-amber-200 text-slate-800 shadow-sm font-medium">
+                  <em>"Soudain, une ombre surgit... Chloé échappe son seau et Léo protège les bonbons..."</em>
+                </div>
+              </div>
+
+              {/* FIN */}
+              <div 
+                onClick={() => setActiveSection('fin')}
+                className={`cursor-pointer transition-all duration-300 p-6 sm:p-8 rounded-3xl border-4 ${
+                  activeSection === 'fin' || activeSection === 'all'
+                    ? 'border-purple-500 bg-purple-50/90 shadow-lg ring-2 ring-purple-300 scale-[1.01]'
+                    : 'border-slate-200 bg-slate-50 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="bg-purple-600 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl font-heading tracking-wide">
+                    FIN
+                  </span>
+                  <span className="text-4xl">🏁</span>
+                </div>
+                <h4 className="font-extrabold text-2xl text-purple-950 font-heading">Le dénouement & Bilan</h4>
+                <div className="space-y-2 text-base text-purple-900 mt-2 leading-relaxed">
+                  <p>• <strong>Dénouement :</strong> Dernière action (réussite/échec).</p>
+                  <p>• <strong>Situation finale :</strong> Retour au calme (optionnel).</p>
+                </div>
+                <div className="mt-5 text-sm sm:text-base bg-white p-4 rounded-2xl border border-purple-200 text-slate-800 shadow-sm font-medium">
+                  <em>"La voisine aide à tout ramasser, et les enfants reprennent joyeusement leur tournée..."</em>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Complete Story Breakdown Cards */}
+          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-md border border-slate-200 space-y-8">
+            <div className="border-b border-slate-100 pb-4">
+              <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 flex items-center gap-3">
+                <span>🎃</span> Exemple d'histoire d'Halloween élaborée : <em>La grande récolte d'Halloween</em>
+              </h3>
+              <p className="text-slate-600 text-base mt-1">
+                Observe attentivement la structure détaillée de ce récit d'Halloween enrichi.
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              
+              {/* DÉBUT STORY BOX */}
+              {(activeSection === 'all' || activeSection === 'debut') && (
+                <div className="bg-emerald-50/80 border-l-8 border-emerald-500 p-6 sm:p-8 rounded-3xl space-y-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-emerald-900 font-extrabold text-lg uppercase tracking-wide font-heading">
+                      1. LE DÉBUT — La situation initiale
+                    </span>
+                    <span className="bg-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full">
+                      Point de départ
+                    </span>
+                  </div>
+                  
+                  <div className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm text-lg sm:text-xl font-medium text-slate-800 leading-relaxed">
+                    [ Un soir d'octobre, Léo, déguisé en pirate, et sa petite sœur Chloé, déguisée en sorcière, marchent dans les rues animées du quartier. Leurs citrouilles débordent déjà de délicieux bonbons quand ils arrivent près d'une maison sombre. ]
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <span className="bg-emerald-100 text-emerald-900 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-300">
+                      📍 Lieu : Les rues animées du quartier
+                    </span>
+                    <span className="bg-emerald-100 text-emerald-900 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-300">
+                      👤 Personnages : Léo (le pirate) & Chloé (la sorcière)
+                    </span>
+                    <span className="bg-emerald-100 text-emerald-900 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-300">
+                      🍁 Moment & Action : Soirée d'octobre, collecte de bonbons
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* MILIEU STORY BOX */}
+              {(activeSection === 'all' || activeSection === 'milieu') && (
+                <div className="bg-amber-50/80 border-l-8 border-amber-500 p-6 sm:p-8 rounded-3xl space-y-6 shadow-sm">
+                  <span className="text-amber-950 font-extrabold text-lg uppercase tracking-wide font-heading block">
+                    2. LE MILIEU — Le Problème & Les Péripéties
+                  </span>
+
+                  {/* Élément déclencheur */}
+                  <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-amber-500 text-white font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg uppercase">
+                        Élément déclencheur
+                      </span>
+                      <span className="text-sm font-bold text-amber-900">Événement perturbateur</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-medium text-slate-800 leading-relaxed">
+                      [ Soudain, une grande ombre surgit d'un buisson avec un miaulement perçant ! ]
+                    </p>
+                  </div>
+
+                  {/* Péripéties */}
+                  <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-amber-600 text-white font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg uppercase">
+                        Les Péripéties
+                      </span>
+                      <span className="text-sm font-bold text-amber-900">Actions pour tenter de faire face au problème</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-medium text-slate-800 leading-relaxed">
+                      [ Sursautant de peur, Chloé échappe son seau. Une montagne de bonbons s'éparpille sur le trottoir et un petit chien curieux accourt pour les manger. Léo le repousse courageusement avec son sabre pendant que Chloé ramasse vite son trésor sucré. ]
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* FIN STORY BOX */}
+              {(activeSection === 'all' || activeSection === 'fin') && (
+                <div className="bg-purple-50/80 border-l-8 border-purple-500 p-6 sm:p-8 rounded-3xl space-y-6 shadow-sm">
+                  <span className="text-purple-950 font-extrabold text-lg uppercase tracking-wide font-heading block">
+                    3. LA FIN — Le Dénouement & La Situation Finale
+                  </span>
+
+                  {/* Dénouement */}
+                  <div className="bg-white p-6 rounded-2xl border border-purple-200 shadow-sm space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-purple-600 text-white font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg uppercase">
+                        Le Dénouement
+                      </span>
+                      <span className="text-sm font-bold text-purple-900">Résolution du problème</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-medium text-slate-800 leading-relaxed">
+                      [ Heureusement, la gentille voisine sort de sa maison avec une lampe de poche. Elle rappelle son chien espiègle et aide les enfants à retrouver les chocolats. ]
+                    </p>
+                  </div>
+
+                  {/* Situation finale */}
+                  <div className="bg-white p-6 rounded-2xl border border-purple-200 shadow-sm space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-purple-700 text-white font-extrabold text-xs sm:text-sm px-3 py-1 rounded-lg uppercase">
+                        La Situation finale
+                      </span>
+                      <span className="text-sm font-bold text-purple-900">Nouvel état de calme</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-medium text-slate-800 leading-relaxed">
+                      [ Rassurés, Léo et Chloé reprennent joyeusement leur marche sous les étoiles. ]
+                    </p>
+                    <div className="bg-purple-100 p-4 rounded-xl border border-purple-300 text-sm sm:text-base text-purple-950 font-semibold flex items-center space-x-3 mt-2">
+                      <span className="text-2xl">💡</span>
+                      <span><strong>À retenir :</strong> Dans une histoire complète, le problème trouve toujours sa résolution avant le retour au calme!</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Sorting Activity */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-8 sm:p-10 text-white shadow-2xl space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-indigo-800/80 pb-6">
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-yellow-300 flex items-center gap-3">
+                  <span>🎮</span> Atelier interactif : Place chaque partie du récit au bon endroit!
+                </h3>
+                <p className="text-indigo-200 text-base mt-1">
+                  Sélectionne le bon bouton (Début, Milieu ou Fin) pour classer chaque extrait de cette aventure d'Halloween.
+                </p>
+              </div>
+              <button
+                onClick={resetSorting}
+                className="px-4 py-2 bg-indigo-800 hover:bg-indigo-700 rounded-2xl text-sm font-bold transition-all text-indigo-100"
+              >
+                🔄 Réinitialiser
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {dragParagraphs.map((item, idx) => (
+                <div key={item.id} className="bg-indigo-900/60 p-6 rounded-3xl border border-indigo-700/60 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-md">
+                  <p className="text-lg sm:text-xl font-medium text-indigo-50 leading-relaxed flex-1">
+                    <span className="font-extrabold text-yellow-400 mr-2">{idx + 1}.</span> "{item.text}"
+                  </p>
+
+                  {/* Choice Buttons - TNI Optimized */}
+                  <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+                    <button
+                      onClick={() => handleAssign(item.id, 'debut')}
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-extrabold transition-all flex-1 lg:flex-none shadow-md ${
+                        placedItems[item.id] === 'debut'
+                          ? 'bg-emerald-500 text-white ring-4 ring-white scale-105'
+                          : 'bg-slate-800 text-slate-200 hover:bg-emerald-900'
+                      }`}
+                    >
+                      🟢 Début
+                    </button>
+                    <button
+                      onClick={() => handleAssign(item.id, 'milieu')}
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-extrabold transition-all flex-1 lg:flex-none shadow-md ${
+                        placedItems[item.id] === 'milieu'
+                          ? 'bg-amber-500 text-white ring-4 ring-white scale-105'
+                          : 'bg-slate-800 text-slate-200 hover:bg-amber-900'
+                      }`}
+                    >
+                      🟡 Milieu
+                    </button>
+                    <button
+                      onClick={() => handleAssign(item.id, 'fin')}
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-extrabold transition-all flex-1 lg:flex-none shadow-md ${
+                        placedItems[item.id] === 'fin'
+                          ? 'bg-purple-500 text-white ring-4 ring-white scale-105'
+                          : 'bg-slate-800 text-slate-200 hover:bg-purple-900'
+                      }`}
+                    >
+                      🔴 Fin
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Validation Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
+              <button
+                onClick={checkSorting}
+                disabled={Object.keys(placedItems).length < dragParagraphs.length}
+                className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-heading font-extrabold text-lg sm:text-xl transition-all shadow-xl ${
+                  Object.keys(placedItems).length === dragParagraphs.length
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white scale-105 cursor-pointer pulse-glow'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                }`}
+              >
+                ✅ Vérifier mes réponses ({Object.keys(placedItems).length}/{dragParagraphs.length})
+              </button>
+
+              {sortingFeedback && (
+                <div className={`p-4 rounded-2xl text-base sm:text-lg font-bold w-full sm:w-auto text-center ${
+                  sortingFeedback.success ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50' : 'bg-rose-500/20 text-rose-300 border border-rose-500/50'
+                }`}>
+                  {sortingFeedback.message}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CTA Banner */}
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 text-white text-center space-y-4 shadow-xl">
+            <h3 className="text-2xl sm:text-3xl font-extrabold font-heading">
+              Prêt à inventer ta propre histoire?
+            </h3>
+            <p className="text-indigo-100 max-w-2xl mx-auto text-base sm:text-lg">
+              Passe au projet d'écriture guidé pour construire une aventure passionnante en forêt!
+            </p>
+            <div className="pt-2">
+              <button
+                onClick={onGoToProject}
+                className="px-8 py-4 bg-yellow-400 hover:bg-yellow-300 text-slate-900 rounded-2xl font-heading font-extrabold text-lg sm:text-xl transition-all shadow-lg hover:scale-105"
+              >
+                ✍️ Commencer le Projet d'Écriture →
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ProjetEcritureTab({ showToast }) {
+      const [storyPlan, setStoryPlan] = useState({
+        debut: "",
+        milieu: "",
+        fin: ""
+      });
+
+      const [activeStepIndex, setActiveStepIndex] = useState(0);
+
+      const steps = [
+        {
+          key: 'debut',
+          title: '1. Le Début',
+          tag: '🟢 DÉBUT',
+          color: 'emerald',
+          prompt: "Au début d'une histoire, on s'attend à retrouver :",
+          checklist: [
+            "Les personnages",
+            "Le lieu",
+            "Le moment de l'histoire",
+            "L'action du début"
+          ],
+          builder: [
+            { label: "Le moment", options: ["par un bel après-midi d'octobre,", "à la sortie des classes,", "un vendredi soir frais,"] },
+            { label: "Les personnages", options: ["Léo et Maya", "deux amis inséparables", "les deux écoliers"] },
+            { label: "Une action (phrase 1)", options: ["s'aventurent sur un nouveau chemin.", "découvrent une vieille cabane en bois.", "s'arrêtent devant un grand tas de feuilles."] },
+            { label: "Une émotion (phrase 2)", options: ["ils sont très curieux alors qu'ils marchent sur le sentier.", "un frisson d'excitation les traverse sur ce chemin.", "leur cœur bat vite en avançant sur le sentier étroit."] }
+          ],
+          placeholder: 'Ton début d\'histoire apparaîtra ici...',
+          vocabList: []
+        },
+        {
+          key: 'milieu',
+          title: '2. Le Milieu',
+          tag: '🟡 MILIEU',
+          color: 'amber',
+          prompt: "Dans le milieu de l'histoire, on doit retrouver :",
+          checklist: [
+            "Un élément déclencheur (un problème)",
+            "Des actions faites par les personnages afin de régler ce problème"
+          ],
+          builder: null,
+          placeholder: 'Tout à coup, une soudaine rafale de vent fait claquer la porte de la cabane...',
+          vocabList: [
+            "une soudaine rafale de vent", "un grincement effrayant", "un choc inattendu",
+            "un froissement de feuilles", "un cadenas de métal rouillé", "un verrou coincé"
+          ]
+        },
+        {
+          key: 'fin',
+          title: '3. La Fin',
+          tag: '🔴 FIN',
+          color: 'purple',
+          prompt: "À la fin de l'histoire, on doit retrouver :",
+          checklist: [
+            "Dernière tentative des personnages pour résoudre le problème (ils peuvent réussir ou échouer)",
+            "Les personnages se retrouvent dans une nouvelle situation (situation finale)"
+          ],
+          note: "Remarque : Parfois, il n'y a pas de situation finale dans un récit.",
+          builder: null,
+          placeholder: 'Finalement, ils trouvent une vieille clé dorée sous les feuilles...',
+          vocabList: [
+            "un petit écureuil roux", "la serrure débloquée", "un trésor ancien",
+            "un bel après-midi", "le secret partagé"
+          ]
+        }
+      ];
+
+      const currentStep = steps[activeStepIndex];
+
+      const handleTextChange = (value) => {
+        setStoryPlan(prev => ({
+          ...prev,
+          [currentStep.key]: value
+        }));
+      };
+
+      const appendVocab = (word) => {
+        const currentText = storyPlan[currentStep.key] || "";
+        let textToAppend = word;
+
+        // Auto-majuscule si début de texte ou après un point
+        const trimmed = currentText.trim();
+        const needsCapitalization = trimmed.length === 0 || /[.!?]\s*$/.test(trimmed);
+
+        if (needsCapitalization) {
+          textToAppend = textToAppend.charAt(0).toUpperCase() + textToAppend.slice(1);
+        }
+
+        const newText = trimmed ? `${trimmed} ${textToAppend}` : textToAppend;
+        handleTextChange(newText);
+        showToast(`Idée ajoutée !`);
+      };
+
+      return (
+        <div className="space-y-10 animate-fadeIn">
+          
+          {/* Project Header Banner */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-8 sm:p-10 text-white shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <span className="bg-white/20 text-white font-extrabold text-sm uppercase px-4 py-1.5 rounded-full">
+                🍂 Projet d'Écriture Créative
+              </span>
+              <span className="text-sm bg-black/20 px-4 py-1.5 rounded-full font-semibold">
+                Thème d'automne • 4e année
+              </span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading leading-tight">
+              Le secret de la cabane de feuilles
+            </h2>
+          </div>
+
+          {/* Writing Workspace */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Step Navigation Sidebar */}
+            <div className="lg:col-span-4 bg-white rounded-3xl p-6 shadow-md border border-slate-200 space-y-4">
+              <h3 className="font-heading font-extrabold text-xl text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+                <span>📋 Plan de Travail</span>
+                <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-bold">
+                  Étape {activeStepIndex + 1} / {steps.length}
+                </span>
+              </h3>
+
+              <div className="space-y-3">
+                {steps.map((s, idx) => {
+                  const isFilled = storyPlan[s.key]?.trim().length > 0;
+                  const isActive = activeStepIndex === idx;
+
+                  return (
+                    <button
+                      key={s.key}
+                      onClick={() => setActiveStepIndex(idx)}
+                      className={`w-full text-left p-4 rounded-2xl transition-all flex items-center justify-between ${
+                        isActive
+                          ? 'bg-slate-900 text-white shadow-lg scale-[1.02] ring-2 ring-indigo-400'
+                          : isFilled
+                          ? 'bg-emerald-50 text-emerald-950 border border-emerald-200 hover:bg-emerald-100'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <span className={`text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded ${
+                          s.color === 'emerald' ? 'bg-emerald-200 text-emerald-900' :
+                          s.color === 'amber' ? 'bg-amber-200 text-amber-900' : 'bg-purple-200 text-purple-900'
+                        }`}>
+                          {s.tag}
+                        </span>
+                        <p className="font-bold text-base line-clamp-1">{s.title}</p>
+                      </div>
+
+                      <span className="text-xl ml-2">
+                        {isFilled ? '✅' : '✏️'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Progress Bar */}
+              <div className="pt-4 border-t border-slate-100 space-y-2">
+                <div className="flex justify-between text-xs font-extrabold text-slate-600">
+                  <span>Progression de rédaction</span>
+                  <span>
+                    {Math.round(
+                      (Object.values(storyPlan).filter(v => v.trim().length > 0).length / steps.length) * 100
+                    )}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                  <div
+                    className="bg-emerald-500 h-full transition-all duration-500"
+                    style={{
+                      width: `${(Object.values(storyPlan).filter(v => v.trim().length > 0).length / steps.length) * 100}%`
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Writing Panel */}
+            <div className="lg:col-span-8 bg-white rounded-3xl p-8 shadow-md border border-slate-200 space-y-6 flex flex-col justify-between">
+              
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase bg-slate-100 text-slate-800 px-3 py-1 rounded">
+                      {currentStep.tag}
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 mt-2">
+                      {currentStep.title}
+                    </h3>
+                  </div>
+                  <span className="text-4xl">✍️</span>
+                </div>
+
+                {/* Directive Box */}
+                <div className="bg-blue-50 p-5 sm:p-6 rounded-2xl border border-blue-200 text-blue-950 text-base sm:text-lg space-y-3">
+                  <p className="font-extrabold text-blue-900 flex items-center gap-2 text-lg">
+                    <span>💡</span> Ce qui est attendu dans cette partie :
+                  </p>
+                  <p className="font-semibold text-blue-900">{currentStep.prompt}</p>
+                  <ul className="space-y-2 pl-2">
+                    {currentStep.checklist.map((item, cIdx) => (
+                      <li key={cIdx} className="flex items-start space-x-2 text-base text-blue-950">
+                        <span className="text-blue-600 font-bold">✓</span>
+                        <span className="font-semibold">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {currentStep.note && (
+                    <div className="mt-3 p-3.5 bg-amber-100/90 border border-amber-300 rounded-xl text-amber-950 text-sm font-bold flex items-center space-x-2">
+                      <span className="text-base">📌</span>
+                      <span>{currentStep.note}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Textarea Input */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-extrabold uppercase tracking-wider text-slate-600">
+                    Rédige ta partie ici :
+                  </label>
+                  <textarea
+                    rows="6"
+                    value={storyPlan[currentStep.key]}
+                    onChange={(e) => handleTextChange(e.target.value)}
+                    placeholder={currentStep.placeholder}
+                    className="w-full p-5 rounded-2xl border-2 border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all text-base sm:text-lg leading-relaxed text-slate-900 font-medium"
+                  ></textarea>
+                </div>
+
+                {/* Clickable Vocabulary Helper / Builder */}
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <span className="text-sm font-extrabold text-slate-700 block">
+                    ✨ Clique sur une idée pour l'ajouter à ton texte :
+                  </span>
+                  
+                  {currentStep.builder ? (
+                    <div className="space-y-4">
+                      {currentStep.builder.map((group, gIdx) => (
+                        <div key={gIdx} className="space-y-2">
+                          <span className="text-xs font-bold uppercase text-indigo-600 tracking-wider">{group.label} :</span>
+                          <div className="flex flex-wrap gap-2.5">
+                            {group.options.map((opt, oIdx) => (
+                              <button
+                                key={oIdx}
+                                onClick={() => appendVocab(opt)}
+                                className="bg-white hover:bg-indigo-600 hover:text-white text-slate-800 text-sm font-bold px-4 py-2 rounded-xl border border-slate-300 shadow-sm transition-all text-left"
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2.5">
+                      {currentStep.vocabList.map((word, wIdx) => (
+                        <button
+                          key={wIdx}
+                          onClick={() => appendVocab(word)}
+                          className="bg-white hover:bg-indigo-600 hover:text-white text-slate-800 text-sm font-bold px-4 py-2 rounded-xl border border-slate-300 shadow-sm transition-all flex items-center space-x-1.5"
+                        >
+                          <span>➕</span>
+                          <span>{word}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Navigation Controls */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-100">
+                <button
+                  onClick={() => setActiveStepIndex(prev => Math.max(0, prev - 1))}
+                  disabled={activeStepIndex === 0}
+                  className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-bold text-base transition-all ${
+                    activeStepIndex === 0
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                >
+                  ← Étape précédente
+                </button>
+
+                <button
+                  onClick={() => setActiveStepIndex(prev => Math.min(steps.length - 1, prev + 1))}
+                  disabled={activeStepIndex === steps.length - 1}
+                  className={`w-full sm:w-auto px-8 py-3 rounded-2xl font-bold text-base transition-all bg-indigo-600 hover:bg-indigo-700 text-white shadow-md ${
+                    activeStepIndex === steps.length - 1 ? 'hidden' : 'block'
+                  }`}
+                >
+                  Étape suivante →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function VocabulaireTab({ showToast }) {
+      const [searchTerm, setSearchTerm] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('all');
+      const [randomIdea, setRandomIdea] = useState(null);
+
+      const copyWord = (word) => {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = word;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        try {
+          document.execCommand("copy");
+          showToast(`Copié : "${word}"`);
+        } catch (err) {
+          showToast(`Sélectionné : ${word}`);
+        }
+        document.body.removeChild(tempTextArea);
+      };
+
+      const generateRandomIdea = () => {
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        const lieu = getRandom(VOCABULARY_DATA.lieux.subcategories[1].words);
+        const pers = getRandom(VOCABULARY_DATA.personnages.subcategories[0].words);
+        const moment = getRandom(VOCABULARY_DATA.moments.subcategories[0].words);
+        const pb = getRandom(VOCABULARY_DATA.declencheurs.subcategories[1].words);
+
+        setRandomIdea({ lieu, pers, moment, pb });
+      };
+
+      return (
+        <div className="space-y-10 animate-fadeIn">
+          
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-8 sm:p-10 text-white shadow-xl space-y-6">
+            <span className="bg-white/20 text-white font-extrabold text-xs uppercase px-4 py-1.5 rounded-full">
+              💡 Boîte à Outils du Rédacteur
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading">
+              Banque de Vocabulaire d'Automne
+            </h2>
+            <p className="text-purple-100 text-lg max-w-3xl leading-relaxed">
+              Utilise ces mots et expressions riches pour donner de la couleur et des détails à ton récit en trois temps.
+            </p>
+
+            {/* Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <input
+                type="text"
+                placeholder="🔍 Rechercher un mot ou une expression (ex: cabane, vent, clé)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 px-5 py-4 rounded-2xl text-slate-900 text-base font-medium focus:ring-4 focus:ring-yellow-300 outline-none shadow-lg"
+              />
+
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-5 py-4 rounded-2xl text-slate-900 text-base font-extrabold bg-white outline-none shadow-lg"
+              >
+                <option value="all">📁 Toutes les catégories</option>
+                <option value="lieux">🏡 Les lieux</option>
+                <option value="personnages">🎒 Les personnages</option>
+                <option value="moments">🍂 Les moments</option>
+                <option value="declencheurs">⚡ L'élément déclencheur</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Random Idea Generator */}
+          <div className="bg-gradient-to-r from-amber-400 to-orange-400 rounded-3xl p-8 text-slate-950 shadow-lg space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-2xl font-extrabold font-heading flex items-center gap-3">
+                  <span>🎲</span> Générateur d'idées d'histoire
+                </h3>
+                <p className="text-base font-medium text-slate-900 mt-1">
+                  Besoin d'inspiration? Génère une combinaison magique pour ton récit!
+                </p>
+              </div>
+              <button
+                onClick={generateRandomIdea}
+                className="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-extrabold text-base transition-all shadow-md"
+              >
+                ✨ Lancer le dé magique
+              </button>
+            </div>
+
+            {randomIdea && (
+              <div className="bg-white/95 p-6 rounded-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm sm:text-base shadow-md">
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                  <span className="font-extrabold text-amber-950 block">👥 Personnage :</span>
+                  <span>{randomIdea.pers}</span>
+                </div>
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                  <span className="font-extrabold text-amber-950 block">🏡 Lieu :</span>
+                  <span>{randomIdea.lieu}</span>
+                </div>
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                  <span className="font-extrabold text-amber-950 block">🍂 Moment :</span>
+                  <span>{randomIdea.moment}</span>
+                </div>
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                  <span className="font-extrabold text-amber-950 block">⚡ Obstacle :</span>
+                  <span>{randomIdea.pb}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Vocab Categories */}
+          <div className="space-y-10">
+            {Object.keys(VOCABULARY_DATA).map((catKey) => {
+              if (selectedCategory !== 'all' && selectedCategory !== catKey) return null;
+
+              const category = VOCABULARY_DATA[catKey];
+
+              return (
+                <div key={catKey} className="bg-white rounded-3xl p-8 shadow-md border border-slate-200 space-y-6">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 pb-3 border-b border-slate-100">
+                    {category.title}
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {category.subcategories.map((subCat, sIdx) => {
+                      const filteredWords = subCat.words.filter(w =>
+                        w.toLowerCase().includes(searchTerm.toLowerCase())
+                      );
+
+                      if (searchTerm && filteredWords.length === 0) return null;
+
+                      return (
+                        <div key={sIdx} className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+                          <h4 className="font-extrabold text-base text-slate-800 font-heading uppercase tracking-wide">
+                            🔹 {subCat.subtitle}
+                          </h4>
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {filteredWords.map((word, wIdx) => (
+                              <button
+                                key={wIdx}
+                                onClick={() => copyWord(word)}
+                                className="bg-white hover:bg-purple-600 hover:text-white text-slate-800 text-sm sm:text-base font-bold px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm transition-all"
+                                title="Cliquer pour copier"
+                              >
+                                <span>{word}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function QuizTab({ showToast }) {
+      const [currentQIndex, setCurrentQIndex] = useState(0);
+      const [selectedOption, setSelectedOption] = useState(null);
+      const [showFeedback, setShowFeedback] = useState(false);
+      const [score, setScore] = useState(0);
+      const [showHint, setShowHint] = useState(false);
+      const [quizFinished, setQuizFinished] = useState(false);
+
+      const currentQ = QUIZ_QUESTIONS[currentQIndex];
+
+      const handleSelectOption = (index) => {
+        if (showFeedback) return;
+        setSelectedOption(index);
+      };
+
+      const handleValidate = () => {
+        if (selectedOption === null) return;
+        setShowFeedback(true);
+        if (selectedOption === currentQ.correctIndex) {
+          setScore(prev => prev + 1);
+        }
+      };
+
+      const handleNextQuestion = () => {
+        setSelectedOption(null);
+        setShowFeedback(false);
+        setShowHint(false);
+
+        if (currentQIndex < QUIZ_QUESTIONS.length - 1) {
+          setCurrentQIndex(prev => prev + 1);
+        } else {
+          setQuizFinished(true);
+          if (typeof confetti === 'function') confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+        }
+      };
+
+      const handleRestartQuiz = () => {
+        setCurrentQIndex(0);
+        setSelectedOption(null);
+        setShowFeedback(false);
+        setShowHint(false);
+        setScore(0);
+        setQuizFinished(false);
+      };
+
+      return (
+        <div className="space-y-10 animate-fadeIn max-w-5xl mx-auto w-full">
+          
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-8 sm:p-10 text-white shadow-xl flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div>
+              <span className="bg-white/20 text-white font-extrabold text-xs uppercase px-4 py-1.5 rounded-full">
+                🎯 Validation des connaissances
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading mt-3">
+                Quiz : Le schéma en trois temps
+              </h2>
+              <p className="text-emerald-100 text-base mt-1">
+                Teste ta compréhension du schéma du récit!
+              </p>
+            </div>
+
+            {!quizFinished && (
+              <div className="bg-white/10 px-6 py-4 rounded-3xl border border-white/20 text-center min-w-[150px] shadow-inner">
+                <span className="text-xs uppercase font-extrabold block text-emerald-100">Score</span>
+                <span className="text-3xl font-extrabold font-heading text-yellow-300">{score} / {QUIZ_QUESTIONS.length}</span>
+              </div>
+            )}
+          </div>
+
+          {!quizFinished ? (
+            <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-md border border-slate-200 space-y-8">
+              
+              {/* Question Header Bar */}
+              <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                <span className="font-heading font-extrabold text-base text-emerald-900 bg-emerald-100 px-4 py-1.5 rounded-xl">
+                  Question {currentQIndex + 1} sur {QUIZ_QUESTIONS.length}
+                </span>
+
+                <button
+                  onClick={() => setShowHint(!showHint)}
+                  className="text-sm font-extrabold text-amber-800 bg-amber-100 hover:bg-amber-200 px-4 py-2 rounded-2xl transition-all flex items-center space-x-2"
+                >
+                  <span>🟡</span>
+                  <span>{showHint ? "Masquer l'indice" : "Besoin d'un indice?"}</span>
+                </button>
+              </div>
+
+              {/* Hint */}
+              {showHint && (
+                <div className="bg-amber-50 border-l-8 border-amber-400 p-5 rounded-2xl text-amber-950 text-base font-medium animate-fadeIn">
+                  💡 <strong>Indice :</strong> {currentQ.hint}
+                </div>
+              )}
+
+              {/* Question Label */}
+              <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 leading-snug">
+                {currentQ.question}
+              </h3>
+
+              {/* Options Grid */}
+              <div className="space-y-4">
+                {currentQ.options.map((opt, idx) => {
+                  let btnStyle = "bg-slate-50 border-2 border-slate-200 text-slate-800 hover:bg-slate-100";
+
+                  if (selectedOption === idx) {
+                    btnStyle = "bg-indigo-50 border-4 border-indigo-600 text-indigo-950 font-bold shadow-md";
+                  }
+
+                  if (showFeedback) {
+                    if (idx === currentQ.correctIndex) {
+                      btnStyle = "bg-emerald-100 border-4 border-emerald-600 text-emerald-950 font-extrabold shadow-md";
+                    } else if (selectedOption === idx) {
+                      btnStyle = "bg-rose-100 border-4 border-rose-500 text-rose-950 font-bold";
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelectOption(idx)}
+                      disabled={showFeedback}
+                      className={`w-full text-left p-6 rounded-2xl text-lg sm:text-xl transition-all flex items-center justify-between ${btnStyle}`}
+                    >
+                      <span className="font-medium leading-relaxed">{opt}</span>
+                      {showFeedback && idx === currentQ.correctIndex && <span className="text-emerald-700 font-extrabold text-xl">🟢 Correct</span>}
+                      {showFeedback && selectedOption === idx && idx !== currentQ.correctIndex && <span className="text-rose-700 font-extrabold text-xl">🔴 Incorrect</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Feedback Explanation */}
+              {showFeedback && (
+                <div className={`p-6 rounded-3xl text-lg font-medium space-y-2 animate-fadeIn ${
+                  selectedOption === currentQ.correctIndex
+                    ? 'bg-emerald-50 border border-emerald-300 text-emerald-950'
+                    : 'bg-rose-50 border border-rose-300 text-rose-950'
+                }`}>
+                  <p className="font-extrabold font-heading text-xl">
+                    {selectedOption === currentQ.correctIndex ? "🎉 Bravo, c'est exact!" : "❌ Oups, pas tout à fait..."}
+                  </p>
+                  <p className="leading-relaxed">{currentQ.explanation}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end pt-4 border-t border-slate-100">
+                {!showFeedback ? (
+                  <button
+                    onClick={handleValidate}
+                    disabled={selectedOption === null}
+                    className={`px-10 py-4 rounded-2xl font-heading font-extrabold text-xl transition-all ${
+                      selectedOption !== null
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl cursor-pointer scale-105'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Vérifier ma réponse
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNextQuestion}
+                    className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-heading font-extrabold text-xl transition-all shadow-xl scale-105"
+                  >
+                    {currentQIndex < QUIZ_QUESTIONS.length - 1 ? "Question suivante →" : "Voir mon résultat →"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Quiz Completed Screen */
+            <div className="bg-white rounded-3xl p-10 sm:p-16 text-center shadow-2xl border border-slate-200 space-y-8">
+              <span className="text-7xl sm:text-8xl block">🏆</span>
+              <h3 className="text-4xl sm:text-5xl font-extrabold font-heading text-slate-900">
+                Félicitations!
+              </h3>
+              <p className="text-slate-700 text-xl max-w-xl mx-auto">
+                Tu as terminé le quiz sur le schéma du récit en trois temps.
+              </p>
+
+              <div className="inline-block bg-slate-900 text-white p-8 rounded-3xl space-y-2 shadow-xl">
+                <span className="text-sm uppercase tracking-wider font-extrabold text-slate-400 block">Ton Score Final</span>
+                <span className="text-5xl sm:text-6xl font-extrabold font-heading text-yellow-400">
+                  {score} / {QUIZ_QUESTIONS.length}
+                </span>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  onClick={handleRestartQuiz}
+                  className="px-10 py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-heading font-extrabold text-xl transition-all shadow-xl hover:scale-105"
+                >
+                  🔄 Recommencer le quiz
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
